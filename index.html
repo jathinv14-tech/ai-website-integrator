@@ -635,6 +635,8 @@
 
         // Load demo data and show interface
         async function loadDemoAndShowInterface(demoId) {
+            console.log('Loading demo:', demoId);
+            
             // Try to load from cloud storage first
             let demoData = await loadDemoFromCloud(demoId);
             
@@ -642,16 +644,22 @@
                 // Fallback to localStorage for backward compatibility
                 const localData = localStorage.getItem(`demo_${demoId}`);
                 if (localData) {
-                    demoData = JSON.parse(localData);
+                    try {
+                        demoData = JSON.parse(localData);
+                    } catch (e) {
+                        console.error('Failed to parse local demo data:', e);
+                    }
                 }
             }
             
             if (demoData) {
-                const demo = JSON.parse(demoData);
-                document.body.innerHTML = createDemoHTML(demo);
-                setupDemoInteractions(demo);
+                console.log('Demo data found:', demoData);
+                // demoData is already parsed, don't parse again
+                document.body.innerHTML = createDemoHTML(demoData);
+                setupDemoInteractions(demoData);
             } else {
-                document.body.innerHTML = '<div style="text-align: center; padding: 50px;"><h2>Demo not found</h2><p>The demo you\'re looking for doesn\'t exist or has expired.</p></div>';
+                console.log('No demo data found for:', demoId);
+                document.body.innerHTML = '<div style="text-align: center; padding: 50px;"><h2>Demo not found</h2><p>The demo you\'re looking for doesn\'t exist or has expired.</p><p><a href="index.html">Create a new demo</a></p></div>';
             }
         }
 
@@ -1093,7 +1101,7 @@
                     const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`);
                     if (response.ok) {
                         const result = await response.json();
-                        return JSON.stringify(result.record);
+                        return result.record; // Return the parsed object, not a string
                     }
                 }
             } catch (error) {
